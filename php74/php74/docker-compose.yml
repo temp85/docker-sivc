@@ -1,0 +1,62 @@
+version: '3'
+
+#NETWORK 
+networks:
+  php74: #network name
+    driver: bridge
+#VOLUMES
+volumes:
+  php74: #volumes name
+    driver_opts:
+      device: /users/temp/docker/sites/
+      o: bind
+      type: none
+    
+services:
+  #container PHP 
+    my-php:
+      container_name: c-php7.4
+      build:
+        dockerfile: Dockerfile
+        context: ./
+      hostname: php74
+      restart: always
+      networks: 
+        - php74
+      volumes:
+        - php74:/home/sites/
+      environment:
+        PHP_IDE_CONFIG: "serverName=php74"
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+  #container HTTPD
+    my-httpd:
+      container_name: c-httpd
+      image: "httpd"
+      hostname: httpd
+      restart: always
+      networks:
+        - php74
+      volumes:
+        - php74:/home/sites/
+        - /users/temp/docker/configs/php74/httpd.conf:/usr/local/apache2/conf/httpd.conf 
+      ports:
+        - "3008:80" #localhost:3008
+        - "443:443"
+  #container  MYSQL
+    my-sql:
+      container_name: c-mysql8
+      image: "mysql"
+      hostname: mysql8
+      restart: always
+      networks:
+        - php74
+      volumes:
+        - /users/temp/docker/sites/php74/db:/var/lib/mysql
+        - /users/temp/Dockerfile/configs/php74/my.cnf:/etc/mysql/my.cnf
+      ports:
+        - "3388:3306"
+      environment:
+        - MYSQL_ROOT_PASSWORD=123456
+ 
+     
